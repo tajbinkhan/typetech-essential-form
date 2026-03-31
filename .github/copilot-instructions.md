@@ -116,7 +116,6 @@ When zod is present, never define a duplicate manual form type.
 - Follow shadcn form patterns used in this project.
 - Do NOT keep everything in one file.
 - Separate concerns into:
-
   - `*-form.tsx` → UI + wiring only
   - `*-form.schema.ts` → zod schema
   - `*-form.types.ts` → zod-inferred types only (if needed)
@@ -156,11 +155,13 @@ Verification workflow:
 - Run build (if relevant)
 
 If any step fails:
+
 - Fix the issue
 - Re-run checks
 - Do not finalize until resolved
 
 If verification cannot be executed:
+
 - Clearly state that instead of assuming correctness
 
 ---
@@ -194,3 +195,64 @@ Before finalizing any form:
 - No compile errors?
 
 If any answer is "no", fix before responding.
+
+## Form UI and component rules
+
+When building form UIs in this project:
+
+- Use the Poppins font for the form UI when the project styling system supports it.
+- Use shadcn/ui components for interactive inputs.
+- Use the shadcn calendar-based date picker for date selection.
+- Prefer dropdown/select components over plain text input when the field is a fixed choice.
+- Prefer multi-select UI for user/member selection when the field represents multiple people.
+- Do not use a plain textarea for member selection if a select or multi-select pattern is available or can be built cleanly with existing project components.
+- Keep the UI modern, clean, and consistent with shadcn patterns.
+
+## Date picker rules
+
+- Do not use a plain native date input for primary date selection in shadcn forms.
+- Use the shadcn calendar date picker pattern.
+- Keep the selected date formatted clearly in the trigger button/input.
+- Store the underlying value in a form-friendly format that is easy to format for output.
+
+## Member selection rules
+
+- Use a dropdown/select for single-choice fields when appropriate.
+- Use a multi-select for present members and absent members.
+- Present and absent values should be stored as clean structured values, not as one raw comma-separated string from a textarea.
+- Convert selected members into the final WhatsApp message format in helper/formatter logic.
+
+## Typography rules
+
+- Use Poppins for this form UI.
+- Apply typography consistently across labels, inputs, preview, and actions.
+- Do not mix random font styles in the same form.
+
+## WhatsApp output rules
+
+- The generated message must remain plain text suitable for WhatsApp.
+- Preserve emoji, spacing, and line breaks.
+- Join selected member names with comma + space.
+- If the absent field has no selected users, do NOT render the Absent line at all.
+- Do not show:
+  - `❌ Absent:`
+  - or an empty absent row
+    when no absent users are selected.
+
+Expected behavior:
+
+- Present line always appears when there are selected present members.
+- Absent line appears only when absent members exist.
+
+Example rule:
+
+- If `absentMembers.length === 0`, omit the absent line from the final message output entirely.
+
+## Preferred field UX rules
+
+- Date → shadcn calendar date picker
+- Lead/host or other single-choice user field → dropdown/select
+- Present members → multi-select
+- Absent members → multi-select
+- Keep labels inline in JSX
+- Keep field rendering in the Controller-based shadcn form pattern

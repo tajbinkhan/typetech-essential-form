@@ -1,3 +1,29 @@
+export const DAILY_STANDUP_TEAM_MEMBERS = [
+	"Hasan",
+	"Remo",
+	"Joshio",
+	"Tonmoy",
+	"Sohag",
+	"Sangram",
+	"Evan",
+	"Jayedi",
+	"Rifat",
+] as const;
+
+export const DAILY_STANDUP_HOSTS = [
+	"Saifur Rahman",
+	"Hasan",
+	"Remo",
+	"Joshio",
+] as const;
+
+export const DAILY_STANDUP_LEADS = [
+	"Sangram",
+	"Evan",
+	"Tonmoy",
+	"Hasan",
+] as const;
+
 export const DAILY_STANDUP_FORM_TITLE = "Daily Standup Meeting Update";
 
 export const DAILY_STANDUP_FORM_DESCRIPTION =
@@ -8,15 +34,23 @@ export const DAILY_STANDUP_PREVIEW_TITLE = "WhatsApp Preview";
 export const DAILY_STANDUP_PREVIEW_DESCRIPTION =
 	"Preserves the exact spacing, emojis, and line breaks.";
 
-export const DAILY_STANDUP_DEFAULT_PRESENT_MEMBERS =
-	"Hasan, Remo, Joshio, Tonmoy, Sohag, Sangram, Evan, Jayedi, Rifat";
+export const DAILY_STANDUP_DEFAULT_PRESENT_MEMBERS = [
+	"Hasan",
+	"Remo",
+	"Joshio",
+	"Tonmoy",
+	"Sohag",
+	"Sangram",
+	"Evan",
+	"Jayedi",
+	"Rifat",
+];
 
 export const DAILY_STANDUP_DEFAULT_VALUES = {
-	date: new Date().toISOString().slice(0, 10),
+	date: new Date(),
 	host: "Saifur Rahman",
 	lead: "Sangram",
 	presentMembers: DAILY_STANDUP_DEFAULT_PRESENT_MEMBERS,
-	absentMembers: "",
 };
 
 export const DAILY_STANDUP_MONTH_NAMES = [
@@ -46,19 +80,10 @@ export const DAILY_STANDUP_TEMPLATE = {
 	absentLabel: "❌ Absent:",
 } as const;
 
-export const DAILY_STANDUP_FIELD_LABELS = {
-	date: "Date",
-	host: "Host",
-	lead: "Lead",
-	presentMembers: "Present members",
-	absentMembers: "Absent members",
-} as const;
-
 export const DAILY_STANDUP_PLACEHOLDERS = {
-	host: "Saifur Rahman",
-	lead: "Sangram",
-	presentMembers: "Hasan, Remo, Joshio",
-	absentMembers: "Optional",
+	host: "Select host",
+	lead: "Select lead",
+	presentMembers: "Select present members",
 } as const;
 
 export const DAILY_STANDUP_COPY_LABELS = {
