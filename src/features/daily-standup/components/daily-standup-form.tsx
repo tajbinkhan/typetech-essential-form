@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { CalendarIcon } from "lucide-react";
 
@@ -34,30 +34,37 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { dailyStandupFormResolver } from "@/features/daily-standup/schemas/daily-standup-form.schema";
-import type {
-	DailyStandupCopyState,
-	DailyStandupFormValues,
-} from "@/features/daily-standup/types/daily-standup-form.types";
+import type { DailyStandupFormValues } from "@/features/daily-standup/types/daily-standup-form.types";
 import {
-	DAILY_STANDUP_COPY_LABELS,
 	DAILY_STANDUP_DEFAULT_VALUES,
-	DAILY_STANDUP_FORM_DESCRIPTION,
-	DAILY_STANDUP_FORM_TITLE,
-	DAILY_STANDUP_HOSTS,
-	DAILY_STANDUP_LEADS,
-	DAILY_STANDUP_PLACEHOLDERS,
-	DAILY_STANDUP_PREVIEW_DESCRIPTION,
-	DAILY_STANDUP_PREVIEW_TITLE,
+	DAILY_STANDUP_FORM_STORAGE_KEY,
 	DAILY_STANDUP_TEAM_MEMBERS,
 } from "@/features/daily-standup/utils/daily-standup-form.constants";
-import { buildDailyStandupMessage } from "@/features/daily-standup/utils/daily-standup-form.helpers";
+import {
+	buildDailyStandupMessage,
+	normalizeDailyStandupFormValues,
+	parseDailyStandupFormValues,
+	serializeDailyStandupFormValues,
+} from "@/features/daily-standup/utils/daily-standup-form.helpers";
 
 export function DailyStandupForm() {
-	const [copyState, setCopyState] = useState<DailyStandupCopyState>("idle");
+	const [copyState, setCopyState] = useState<"idle" | "copied" | "error">(
+		"idle",
+	);
+	const hasHydratedFromStorageRef = useRef(false);
 
-	const { control } = useForm<DailyStandupFormValues>({
+	const {
+		control,
+		formState: { isDirty },
+		getValues,
+		reset,
+		setValue,
+	} = useForm<DailyStandupFormValues>({
 		resolver: dailyStandupFormResolver,
-		defaultValues: DAILY_STANDUP_DEFAULT_VALUES,
+		defaultValues: {
+			...DAILY_STANDUP_DEFAULT_VALUES,
+			presentMembers: [...DAILY_STANDUP_DEFAULT_VALUES.presentMembers],
+		},
 		mode: "onChange",
 	});
 
@@ -98,6 +105,63 @@ export function DailyStandupForm() {
 		[absentMembers, date, host, lead, presentMembers],
 	);
 
+	useEffect(() => {
+		if (typeof window === "undefined") {
+			return;
+		}
+
+		const storedValue = window.localStorage.getItem(
+			DAILY_STANDUP_FORM_STORAGE_KEY,
+		);
+		if (!storedValue) {
+			hasHydratedFromStorageRef.current = true;
+			return;
+		}
+
+		const parsedValues = parseDailyStandupFormValues(storedValue);
+		if (parsedValues) {
+			const normalizedValues = normalizeDailyStandupFormValues(parsedValues);
+			// reset(normalizedValues);
+			setValue("date", normalizedValues.date, {
+				shouldDirty: false,
+				shouldValidate: true,
+			});
+			setValue("host", normalizedValues.host, {
+				shouldDirty: false,
+				shouldValidate: true,
+			});
+			setValue("lead", normalizedValues.lead, {
+				shouldDirty: false,
+				shouldValidate: true,
+			});
+			setValue("presentMembers", normalizedValues.presentMembers, {
+				shouldDirty: false,
+				shouldValidate: true,
+			});
+		} else {
+			window.localStorage.removeItem(DAILY_STANDUP_FORM_STORAGE_KEY);
+		}
+
+		hasHydratedFromStorageRef.current = true;
+	}, [reset, setValue]);
+
+	useEffect(() => {
+		if (
+			typeof window === "undefined" ||
+			!hasHydratedFromStorageRef.current ||
+			!isDirty
+		) {
+			return;
+		}
+
+		const serializedValues = serializeDailyStandupFormValues(getValues());
+
+		window.localStorage.setItem(
+			DAILY_STANDUP_FORM_STORAGE_KEY,
+			serializedValues,
+		);
+	}, [date, host, lead, presentMembers, getValues, isDirty]);
+
 	async function handleCopyToClipboard() {
 		try {
 			await navigator.clipboard.writeText(previewMessage);
@@ -113,8 +177,10 @@ export function DailyStandupForm() {
 			<div className="grid gap-6 lg:grid-cols-2">
 				<Card>
 					<CardHeader>
-						<CardTitle>{DAILY_STANDUP_FORM_TITLE}</CardTitle>
-						<CardDescription>{DAILY_STANDUP_FORM_DESCRIPTION}</CardDescription>
+						<CardTitle>Daily Standup Meeting Update</CardTitle>
+						<CardDescription>
+							Fill in the fields to generate a ready-to-send WhatsApp update.
+						</CardDescription>
 					</CardHeader>
 					<CardContent>
 						<form noValidate>
@@ -172,12 +238,10 @@ export function DailyStandupForm() {
 												onValueChange={field.onChange}
 											>
 												<SelectTrigger aria-invalid={fieldState.invalid}>
-													<SelectValue
-														placeholder={DAILY_STANDUP_PLACEHOLDERS.host}
-													/>
+													<SelectValue placeholder="Select host" />
 												</SelectTrigger>
 												<SelectContent>
-													{DAILY_STANDUP_HOSTS.map((host) => (
+													{DAILY_STANDUP_TEAM_MEMBERS.map((host) => (
 														<SelectItem key={host} value={host}>
 															{host}
 														</SelectItem>
@@ -202,12 +266,10 @@ export function DailyStandupForm() {
 												onValueChange={field.onChange}
 											>
 												<SelectTrigger aria-invalid={fieldState.invalid}>
-													<SelectValue
-														placeholder={DAILY_STANDUP_PLACEHOLDERS.lead}
-													/>
+													<SelectValue placeholder="Select lead" />
 												</SelectTrigger>
 												<SelectContent>
-													{DAILY_STANDUP_LEADS.map((lead) => (
+													{DAILY_STANDUP_TEAM_MEMBERS.map((lead) => (
 														<SelectItem key={lead} value={lead}>
 															{lead}
 														</SelectItem>
@@ -231,7 +293,7 @@ export function DailyStandupForm() {
 												options={teamMemberOptions}
 												onValueChange={field.onChange}
 												defaultValue={field.value}
-												placeholder={DAILY_STANDUP_PLACEHOLDERS.presentMembers}
+												placeholder="Select present members"
 												aria-invalid={fieldState.invalid}
 											/>
 											{fieldState.invalid && (
@@ -247,9 +309,9 @@ export function DailyStandupForm() {
 
 				<Card>
 					<CardHeader>
-						<CardTitle>{DAILY_STANDUP_PREVIEW_TITLE}</CardTitle>
+						<CardTitle>WhatsApp Preview</CardTitle>
 						<CardDescription>
-							{DAILY_STANDUP_PREVIEW_DESCRIPTION}
+							Preserves the exact spacing, emojis, and line breaks.
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-col gap-4">
@@ -264,13 +326,11 @@ export function DailyStandupForm() {
 							className="w-full sm:w-auto"
 							onClick={handleCopyToClipboard}
 						>
-							{copyState === "copied"
-								? DAILY_STANDUP_COPY_LABELS.copied
-								: DAILY_STANDUP_COPY_LABELS.idle}
+							{copyState === "copied" ? "Copied" : "Copy to clipboard"}
 						</Button>
 						{copyState === "error" ? (
 							<p className="text-sm text-destructive">
-								{DAILY_STANDUP_COPY_LABELS.error}
+								Clipboard access failed. Please copy manually.
 							</p>
 						) : null}
 					</CardContent>

@@ -47,7 +47,7 @@ export interface AnimationConfig {
  * Variants for the multi-select component to handle different styles.
  * Uses class-variance-authority (cva) to define different styles based on "variant" prop.
  */
-const multiSelectVariants = cva("m-1 transition-all duration-300 ease-in-out", {
+const multiSelectVariants = cva("transition-all duration-300 ease-in-out", {
 	variants: {
 		variant: {
 			default: "border-foreground/10 text-foreground bg-card hover:bg-card/80",
@@ -790,10 +790,11 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 									.join(", ")}`}
 					</div>
 
-					<PopoverTrigger asChild>
+					<PopoverTrigger asChild={asChild || true}>
 						<Button
 							ref={buttonRef}
 							{...props}
+							variant="outline"
 							onClick={handleTogglePopover}
 							disabled={disabled}
 							role="combobox"
@@ -805,7 +806,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 								getAllOptions().length
 							} options selected. ${placeholder}`}
 							className={cn(
-								"flex p-1 rounded-md border min-h-10 h-auto items-center justify-between bg-inherit hover:bg-inherit [&_svg]:pointer-events-auto",
+								"flex min-h-10 h-auto items-center justify-between rounded-md border-input bg-background px-3 py-2 font-normal shadow-none hover:bg-background [&_svg]:pointer-events-auto",
 								autoSize ? "w-auto" : "w-full",
 								responsiveSettings.compactMode && "min-h-8 text-sm",
 								screenSize === "mobile" && "min-h-12 text-base",
@@ -896,7 +897,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 														>
 															{option.label}
 														</span>
-														<div
+														<span
 															role="button"
 															tabIndex={0}
 															onClick={(event) => {
@@ -914,16 +915,15 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 																}
 															}}
 															aria-label={`Remove ${option.label} from selection`}
-															className="ml-2 h-4 w-4 cursor-pointer hover:bg-white/20 rounded-sm p-0.5 -m-0.5 focus:outline-none focus:ring-1 focus:ring-white/50"
+															className="ml-1.5 inline-flex size-4 shrink-0 items-center justify-center rounded-sm p-0 text-current/80 hover:bg-foreground/10 hover:text-current focus-visible:ring-1 focus-visible:ring-ring"
 														>
 															<XCircle
 																className={cn(
-																	"h-3 w-3",
-																	responsiveSettings.compactMode &&
-																		"h-2.5 w-2.5",
+																	"size-3",
+																	responsiveSettings.compactMode && "size-2.5",
 																)}
 															/>
-														</div>
+														</span>
 													</Badge>
 												);
 											})
@@ -951,8 +951,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 												} more`}
 												<XCircle
 													className={cn(
-														"ml-2 h-4 w-4 cursor-pointer",
-														responsiveSettings.compactMode && "ml-1 h-3 w-3",
+														"ml-1.5 inline-block size-3 shrink-0 align-middle cursor-pointer",
+														responsiveSettings.compactMode && "ml-1 size-2.5",
 													)}
 													onClick={(event) => {
 														event.stopPropagation();
@@ -1008,11 +1008,11 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 						aria-multiselectable="true"
 						aria-label="Available options"
 						className={cn(
-							"w-auto p-0",
+							"w-(--radix-popover-trigger-width) p-0",
 							getPopoverAnimationClass(),
-							screenSize === "mobile" && "w-[85vw] max-w-70",
-							screenSize === "tablet" && "w-[70vw] max-w-md",
-							screenSize === "desktop" && "min-w-75",
+							screenSize === "mobile" && "max-w-[85vw]",
+							screenSize === "tablet" && "max-w-[70vw]",
+							screenSize === "desktop" && "max-w-full",
 							popoverClassName,
 						)}
 						style={{

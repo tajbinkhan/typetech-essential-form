@@ -4,51 +4,82 @@ applyTo: "src/**/*form*.ts*"
 
 Act like a strict senior engineer reviewing form architecture.
 
+## Core architecture rules
+
 - Follow shadcn form patterns used in this project.
-- Keep the form component focused on rendering and wiring.
-- Move zod schema into a separate `*-form.schema.ts` file.
-- Form value types must be inferred from zod using `z.infer<typeof schema>`.
-- Do NOT create manual duplicate form types when zod inference can be used.
-- Move default values and static text into `*-form.constants.ts`.
-- Move pure formatting/parsing helpers into `*-form.helpers.ts`.
-- Use a separate `*-form.types.ts` file only when it adds clarity, and exported types there must still come from the zod schema.
-- Do not place long helper functions inside the form UI file.
-- Do not place large constant objects or arrays inside the form UI file.
-- Do not create custom form structure if the project already uses shadcn field/form primitives.
-- After coding, verify there are no type errors and no relevant compile/build errors.
-- If verification fails, fix the issues before finalizing.
+- Keep the form component focused on rendering and wiring only.
+- Do NOT keep everything in one file.
 
-## Form field composition rules
+Separate concerns into:
 
-When building forms, use the Controller-based shadcn field structure used in this project.
+- `*-form.tsx` → UI + wiring only
+- `*-form.schema.ts` → zod schema
+- `*-form.types.ts` → zod-inferred types only (if needed)
+- `*-form.constants.ts` → only meaningful reusable constants
+- `*-form.helpers.ts` → only meaningful helper logic
 
-Preferred pattern:
+## Zod rules (STRICT)
 
-- Use `Controller` from `react-hook-form` for form fields.
-- Use `render={({ field, fieldState }) => (...)}`.
-- Use `fieldState.invalid` for invalid state.
-- Use `fieldState.error` for field errors.
-- Spread `field` directly into the input component.
-- Render `FieldError` conditionally only when invalid.
+- Zod schema is the single source of truth.
+- Form values MUST be inferred from zod:
+  - `export type FormValues = z.infer<typeof schema>`
+- Do NOT create manual duplicate types.
+- If duplicate types exist → remove them.
 
-Expected pattern:
+## Constants rules (VERY IMPORTANT)
+
+Create constants ONLY when they provide real value.
+
+Allowed:
+
+- reusable option lists (team members, hosts, leads)
+- storage keys
+- reusable templates used in logic
+- domain configuration
+
+Do NOT extract constants for:
+
+- field labels
+- placeholder text
+- one-off titles or descriptions
+- button text
+- small UI strings
+- formatting fragments
+- month arrays when date formatting can handle it
+- suffix strings like `"th"`
+
+CRITICAL RULE:
+Do NOT move simple UI text into constants just to reduce inline JSX.
+
+## Helper rules
+
+Extract helpers ONLY when:
+
+- logic is reusable
+- logic is complex enough to hurt readability
+- domain transformation exists (e.g. WhatsApp message formatting)
+
+Do NOT extract:
+
+- trivial one-liners
+- logic used once and already readable
+
+## Form field composition rules (STRICT)
+
+Use Controller-based shadcn form pattern.
+
+Required pattern:
 
 ```tsx
 <Controller
-  name="title"
-  control={form.control}
-  render={({ field, fieldState }) => (
-    <Field data-invalid={fieldState.invalid}>
-      <FieldLabel htmlFor="form-title">Title</FieldLabel>
-      <Input
-        {...field}
-        id="form-title"
-        aria-invalid={fieldState.invalid}
-        placeholder="Enter title"
-      />
-      {fieldState.invalid && (
-        <FieldError errors={[fieldState.error]} />
-      )}
-    </Field>
-  )}
+	name="fieldName"
+	control={form.control}
+	render={({ field, fieldState }) => (
+		<Field data-invalid={fieldState.invalid}>
+			<FieldLabel htmlFor="field-id">Label</FieldLabel>
+			<Input {...field} id="field-id" aria-invalid={fieldState.invalid} />
+			{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+		</Field>
+	)}
 />
+```
